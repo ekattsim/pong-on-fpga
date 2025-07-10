@@ -18,20 +18,35 @@ entity PongGame_Basys3 is
     );
 end PongGame_Basys3;
 
-component PongGame is
-    port (
-        leftPaddle: in std_logic;
-    );
-end component;
-
-component SevenSegmentDriver is
-    port(
-        seg: out std_logic_vector(6 downto 0);
-    );
-end component;
-
 architecture PongGame_Basys3_ARCH of PongGame_Basys3 is
+    
+    component SevenSegmentDriver
+		port (
+			reset: in std_logic;
+			clock: in std_logic;
 
+			digit3: in std_logic_vector(3 downto 0);    --leftmost digit
+			digit2: in std_logic_vector(3 downto 0);    --2nd from left digit
+			digit1: in std_logic_vector(3 downto 0);    --3rd from left digit
+			digit0: in std_logic_vector(3 downto 0);    --rightmost digit
+
+			blank3: in std_logic;    --leftmost digit
+			blank2: in std_logic;    --2nd from left digit
+			blank1: in std_logic;    --3rd from left digit
+			blank0: in std_logic;    --rightmost digit
+
+			sevenSegs: out std_logic_vector(6 downto 0);    --MSB=g, LSB=a
+			anodes:    out std_logic_vector(3 downto 0)    --MSB=leftmost digit
+	);
+	end component;
+
+    component PongGame is
+        port (
+            leftPaddle: in std_logic;
+            rightPaddle: in std_logic;
+            
+        );
+end component;
 begin
 
 
