@@ -1,0 +1,5 @@
+#+title: Pong on FPGA
+
+* About
+
+This repository contains the design files, sources, and constraints required to implement pong on [[https://digilent.com/shop/basys-3-amd-artix-7-fpga-trainer-board-recommended-for-introductory-users/][Basys 3 Dev Board]].
