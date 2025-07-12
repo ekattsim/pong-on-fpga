@@ -70,7 +70,7 @@ architecture PongGame_ARCH of PongGame is
 										  (CLOCK_RATE/3)-1, (CLOCK_RATE/4)-1,
 										  (CLOCK_RATE/5)-1, (CLOCK_RATE/6)-1,
 										  (CLOCK_RATE/7)-1, (CLOCK_RATE/8)-1);
-	signal speedRstEn: std_logic;
+	signal speedRstMode: std_logic;
 	signal speedIncEn: std_logic;
 	signal rateEn: std_logic;
 
@@ -139,7 +139,7 @@ begin
 	begin
 		-- set default outputs
 		nextState <= currentState;
-		speedRstEn <= not ACTIVE;
+		speedRstMode <= ACTIVE;
 		speedIncEn <= not ACTIVE;
 		receivingPlayerMode <= LEFT; -- just a default (no priority for LEFT)
 		serveMode <= not ACTIVE;
@@ -170,6 +170,7 @@ begin
 					speedIncEn <= ACTIVE;
 				end if;
 				receivingPlayerMode <= RIGHT;
+				speedRstMode <= not ACTIVE;
 
 				if (ballPosNum=0) then
 					nextState <= RIGHT_HITZONE;
@@ -182,6 +183,7 @@ begin
 				if (currentState/=prevState) then
 					speedIncEn <= ACTIVE;
 				end if;
+				speedRstMode <= not ACTIVE;
 
 				if (ballPosNum=15) then
 					nextState <= LEFT_HITZONE;
@@ -192,6 +194,7 @@ begin
 
 			when RIGHT_HITZONE =>
 				receivingPlayerMode <= RIGHT;
+				speedRstMode <= not ACTIVE;
 
 				if ((ballPosNum=0) and (rightPaddle=ACTIVE)) then
 					nextState <= LEFT_MOVING;
@@ -201,6 +204,7 @@ begin
 				end if;
 
 			when LEFT_HITZONE =>
+				speedRstMode <= not ACTIVE;
 				if ((ballPosNum=15) and (leftPaddle=ACTIVE)) then
 					nextState <= RIGHT_MOVING;
 				end if;
@@ -210,7 +214,6 @@ begin
 
 			when RIGHT_ROUND_OVER =>
 				if (currentState/=prevState) then
-					speedRstEn <= ACTIVE;
 					rightWinEn <= ACTIVE;
 					startTimerEn <= ACTIVE;
 				end if;
@@ -228,7 +231,6 @@ begin
 
 			when LEFT_ROUND_OVER =>
 				if (currentState/=prevState) then
-					speedRstEn <= ACTIVE;
 					leftWinEn <= ACTIVE;
 					startTimerEn <= ACTIVE;
 				end if;
@@ -296,13 +298,12 @@ begin
 
 	----------------------------------------------------------
 	-- A timer with a configurable pulse rate: rateEn. Speed
-	-- is reset by speedRstEn and incremented by speedIncEn.
+	-- is reset by speedRstMode and incremented by speedIncEn.
 	-- The available speeds are described by SPEED_COUNTS.
 	----------------------------------------------------------
 	SPEED_CONTROL: process(reset, clock)
 		variable speedLevel: integer range 0 to 8;
-		-- 1 sec requires the longest count
-		variable counter: integer range 0 to SPEED_COUNTS(1);
+		variable counter: integer range 0 to SPEED_COUNTS(1); -- Level 1 requires the longest count
 	begin
 		if (reset=ACTIVE) then
 			rateEn <= not ACTIVE;
@@ -311,7 +312,7 @@ begin
 		elsif (rising_edge(clock)) then
 			rateEn <= not ACTIVE;
 
-			if (speedRstEn=ACTIVE) then
+			if (speedRstMode=ACTIVE) then
 				speedLevel := 0;
 				counter := 0;
 			elsif (speedIncEn=ACTIVE) then
@@ -320,9 +321,7 @@ begin
 					speedLevel := speedLevel+1;
 					counter := 0;
 				end if;
-			end if;
-
-			if (counter=SPEED_COUNTS(speedLevel)) then
+			elsif (counter=SPEED_COUNTS(speedLevel)) then
 				rateEn <= ACTIVE;
 				counter := 0;
 			else
