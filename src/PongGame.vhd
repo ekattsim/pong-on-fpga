@@ -56,7 +56,7 @@ architecture PongGame_ARCH of PongGame is
 	-- win pattern declarations
 	constant LEFT_WIN_PATTERN: std_logic_vector(15 downto 0) := "1111111100000000";
 	constant RIGHT_WIN_PATTERN: std_logic_vector(15 downto 0) := "0000000011111111";
-	constant PATTERN_PERIOD: integer := (100000000)-1;
+	constant PATTERN_PERIOD: integer := CLOCK_RATE-1;
 
 	signal winMode: Player_t;
 	signal patternMode: std_logic;
@@ -254,7 +254,40 @@ begin
 			when LEFT_GAME_OVER =>
 				patternMode <= ACTIVE;
 		end case;
+	end process;
 
+	LEFT_SCORE: count_to_99(reset, clock, leftWinEn, leftScoreSignal);
+	RIGHT_SCORE: count_to_99(reset, clock, rightWinEn, rightScoreSignal);
+
+	----------------------------------------------------------
+	-- Timer process that starts counting on the startTimerEn
+	-- pulse upto PATTERN_PERIOD and pulses timerDoneEn after
+	-- finishing.
+	----------------------------------------------------------
+	PATTERN_TIMER: process(reset, clock)
+		variable countMode: std_logic;
+		variable counter: integer range 0 to PATTERN_PERIOD;
+	begin
+		if (reset=ACTIVE) then
+			timerDoneEn <= not ACTIVE;
+			countMode := not ACTIVE;
+			counter := 0;
+		elsif (rising_edge(clock)) then
+			if (countMode=ACTIVE) then
+				if (counter/=PATTERN_PERIOD) then
+					timerDoneEn <= not ACTIVE;
+					counter := counter+1;
+				else
+					timerDoneEn <= ACTIVE;
+					counter := 0;
+					countMode := not ACTIVE;
+				end if;
+			elsif (startTimerEn=ACTIVE) then
+				timerDoneEn <= not ACTIVE;
+				countMode := ACTIVE;
+				counter := 0;
+			end if;
+		end if;
 	end process;
 
 end PongGame_ARCH;
