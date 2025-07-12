@@ -65,15 +65,11 @@ architecture PongGame_ARCH of PongGame is
 	signal timerDoneEn: std_logic;
 
 	-- speed control declarations
-	constant SPEED_0: integer := 0;
-	constant SPEED_1: integer := CLOCK_RATE-1;
-	constant SPEED_2: integer := (CLOCK_RATE/2)-1;
-	constant SPEED_3: integer := (CLOCK_RATE/3)-1;
-	constant SPEED_4: integer := (CLOCK_RATE/4)-1;
-	constant SPEED_5: integer := (CLOCK_RATE/5)-1;
-	constant SPEED_6: integer := (CLOCK_RATE/6)-1;
-	constant SPEED_7: integer := (CLOCK_RATE/7)-1;
-	constant SPEED_8: integer := (CLOCK_RATE/8)-1;
+	type ArrayInt_t is array (0 to 8) of integer;
+	constant SPEED_COUNTS: ArrayInt_t := (0, CLOCK_RATE-1, (CLOCK_RATE/2)-1,
+										  (CLOCK_RATE/3)-1, (CLOCK_RATE/4)-1,
+										  (CLOCK_RATE/5)-1, (CLOCK_RATE/6)-1,
+										  (CLOCK_RATE/7)-1, (CLOCK_RATE/8)-1);
 	signal speedRstEn: std_logic;
 	signal speedIncEn: std_logic;
 	signal rateEn: std_logic;
@@ -256,8 +252,13 @@ begin
 		end case;
 	end process;
 
+	----------------------------------------------------------
+	-- Scorekeeper storage blocks
+	----------------------------------------------------------
 	LEFT_SCORE: count_to_99(reset, clock, leftWinEn, leftScoreSignal);
 	RIGHT_SCORE: count_to_99(reset, clock, rightWinEn, rightScoreSignal);
+	leftScore <= std_logic_vector(to_unsigned(leftScoreSignal, 7));
+	rightScore <= std_logic_vector(to_unsigned(rightScoreSignal, 7));
 
 	----------------------------------------------------------
 	-- Timer process that starts counting on the startTimerEn
@@ -273,21 +274,107 @@ begin
 			countMode := not ACTIVE;
 			counter := 0;
 		elsif (rising_edge(clock)) then
-			if (countMode=ACTIVE) then
-				if (counter/=PATTERN_PERIOD) then
-					timerDoneEn <= not ACTIVE;
-					counter := counter+1;
-				else
+			timerDoneEn <= not ACTIVE;
+			if (startTimerEn=ACTIVE) then
+				countMode := ACTIVE;
+				counter := 0;
+			elsif (countMode=ACTIVE) then
+				if (counter=PATTERN_PERIOD) then
 					timerDoneEn <= ACTIVE;
 					counter := 0;
 					countMode := not ACTIVE;
+				else
+					counter := counter+1;
 				end if;
-			elsif (startTimerEn=ACTIVE) then
-				timerDoneEn <= not ACTIVE;
-				countMode := ACTIVE;
-				counter := 0;
 			end if;
 		end if;
 	end process;
 
+	PATTERN_GEN: with winMode select winPattern <=
+		LEFT_WIN_PATTERN when LEFT,
+		RIGHT_WIN_PATTERN when RIGHT;
+
+	----------------------------------------------------------
+	-- A timer with a configurable pulse rate: rateEn. Speed
+	-- is reset by speedRstEn and incremented by speedIncEn.
+	-- The available speeds are described by SPEED_COUNTS.
+	----------------------------------------------------------
+	SPEED_CONTROL: process(reset, clock)
+		variable speedLevel: integer range 0 to 8;
+		-- 1 sec requires the longest count
+		variable counter: integer range 0 to SPEED_COUNTS(1);
+	begin
+		if (reset=ACTIVE) then
+			rateEn <= not ACTIVE;
+			speedLevel := 0;
+			counter := 0;
+		elsif (rising_edge(clock)) then
+			rateEn <= not ACTIVE;
+
+			if (speedRstEn=ACTIVE) then
+				speedLevel := 0;
+				counter := 0;
+			elsif (speedIncEn=ACTIVE) then
+				rateEn <= ACTIVE; -- immediately move ball on successful hit
+				if (speedLevel<8) then
+					speedLevel := speedLevel+1;
+					counter := 0;
+				end if;
+			end if;
+
+			if (counter=SPEED_COUNTS(speedLevel)) then
+				rateEn <= ACTIVE;
+				counter := 0;
+			else
+				counter := counter+1;
+			end if;
+		end if;
+	end process;
+
+	----------------------------------------------------------
+	-- Control block that updates ballPosNum. In serve mode,
+	-- it directly sets ball on one or the other end of the
+	-- field. When not in serve mode, it increments/decrements
+	-- on every rateEn pulse.
+	----------------------------------------------------------
+	BALL_POSITIONER: process(reset, clock)
+	begin
+		if (reset=ACTIVE) then
+			ballPosNum <= 0;
+		elsif (rising_edge(clock)) then
+			if (serveMode=ACTIVE) then
+				if (receivingPlayerMode=LEFT) then
+					ballPosNum <= 0;
+				elsif (receivingPlayerMode=RIGHT) then
+					ballPosNum <= 15;
+				end if;
+			elsif (serveMode=not ACTIVE) then
+				if (rateEn=ACTIVE) then
+					if (receivingPlayerMode = LEFT) then
+						ballPosNum <= ballPosNum + 1;
+					elsif (receivingPlayerMode = RIGHT) then
+						ballPosNum <= ballPosNum - 1;
+					end if;
+				end if;
+			end if;
+		end if;
+	end process;
+
+	LED_DECODER: process(ballPosNum)
+		variable temp: std_logic_vector(15 downto 0);
+	begin
+		temp := (others => '0');
+		if (ballPosNum>=0 and ballPosNum<=15) then
+			temp(ballPosNum) := ACTIVE;
+		end if;
+
+		ballPosLed <= temp;
+	end process;
+
+	LED_SELECT:
+		with patternMode select
+			ledField <= ballPosLed when '0',
+						winPattern when '1',
+						(others => '1') when others;
+ 
 end PongGame_ARCH;
