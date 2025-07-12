@@ -40,11 +40,13 @@ architecture PongGame_ARCH of PongGame is
 
 	-- general constants
 	constant ACTIVE: std_logic := '1';
+	constant CLOCK_RATE: integer := 100000000;
+	type Player_t is (RIGHT, LEFT);
 	
 	-- state machine declarations
 	type States_t is (RIGHT_SERVE, LEFT_SERVE,
 					  RIGHT_MOVING, LEFT_MOVING,
-					  RIGH_HITZONE, LEFT_HITZONE,
+					  RIGHT_HITZONE, LEFT_HITZONE,
 					  RIGHT_ROUND_OVER, LEFT_ROUND_OVER,
 					  RIGHT_GAME_OVER, LEFT_GAME_OVER);
 	signal prevState: States_t;
@@ -55,25 +57,38 @@ architecture PongGame_ARCH of PongGame is
 	constant LEFT_WIN_PATTERN: std_logic_vector(15 downto 0) := "1111111100000000";
 	constant RIGHT_WIN_PATTERN: std_logic_vector(15 downto 0) := "0000000011111111";
 	constant PATTERN_PERIOD: integer := (100000000)-1;
-	signal winPattern: std_logic_vector(15 downto 0);
+
+	signal winMode: Player_t;
 	signal patternMode: std_logic;
+	signal winPattern: std_logic_vector(15 downto 0);
 	signal startTimerEn: std_logic;
 	signal timerDoneEn: std_logic;
 
 	-- speed control declarations
+	constant SPEED_0: integer := 0;
+	constant SPEED_1: integer := CLOCK_RATE-1;
+	constant SPEED_2: integer := (CLOCK_RATE/2)-1;
+	constant SPEED_3: integer := (CLOCK_RATE/3)-1;
+	constant SPEED_4: integer := (CLOCK_RATE/4)-1;
+	constant SPEED_5: integer := (CLOCK_RATE/5)-1;
+	constant SPEED_6: integer := (CLOCK_RATE/6)-1;
+	constant SPEED_7: integer := (CLOCK_RATE/7)-1;
+	constant SPEED_8: integer := (CLOCK_RATE/8)-1;
 	signal speedRstEn: std_logic;
 	signal speedIncEn: std_logic;
 	signal rateEn: std_logic;
 
 	-- ball position declarations
-	signal ballPosNum: std_logic_vector(3 downto 0);
+	signal serveMode: std_logic;
+	signal receivingPlayerMode: Player_t;
+	signal ballPosNum: integer range -1 to 16; -- -1 and 16 are needed for "misses"
 	signal ballPosLed: std_logic_vector(15 downto 0);
 
 	-- score-keeping declarations
 	signal leftWinEn: std_logic;
 	signal rightWinEn: std_logic;
-	signal leftScoreSignal: std_logic_vector(3 downto 0);
-	signal rightScoreSignal: std_logic_vector(3 downto 0);
+	signal leftScoreSignal: integer range 0 to 99;
+	signal rightScoreSignal: integer range 0 to 99;
 
 
 	----------------------------------------------------------
