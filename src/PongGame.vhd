@@ -113,3 +113,148 @@ architecture PongGame_ARCH of PongGame is
 			end if;
 		end if;
 	end count_to_99;
+
+begin
+
+	----------------------------------------------------------
+	-- Stores prevState as well because STATE_TRANSITION needs
+	-- this for generating pulses.
+	----------------------------------------------------------
+	STATE_REGISTERS: process(reset, clock)
+	begin
+		if (reset=ACTIVE) then
+			prevState <= RIGHT_SERVE;
+			currentState <= RIGHT_SERVE;
+		elsif (rising_edge(clock)) then
+			prevState <= currentState;
+			currentState <= nextState;
+		end if;
+	end process;
+
+
+	----------------------------------------------------------
+	-- This block handles control signal generation and state
+	-- transitions.
+	----------------------------------------------------------
+	STATE_TRANSITION: process(leftPaddle, rightPaddle,
+							  prevState, currentState,
+							  ballPosNum, timerDoneEn,
+							  leftScoreSignal, rightScoreSignal)
+	begin
+		-- set default outputs
+		nextState <= currentState;
+		speedRstEn <= not ACTIVE;
+		speedIncEn <= not ACTIVE;
+		receivingPlayerMode <= LEFT; -- just a default (no priority for LEFT)
+		serveMode <= not ACTIVE;
+		patternMode <= not ACTIVE;
+		winMode <= LEFT;
+		leftWinEn <= not ACTIVE;
+		rightWinEn <= not ACTIVE;
+		startTimerEn <= not ACTIVE;
+
+		case (currentState) is
+			when RIGHT_SERVE =>
+				serveMode <= ACTIVE;
+
+				if (rightPaddle=ACTIVE) then
+					nextState <= LEFT_MOVING;
+				end if;
+
+			when LEFT_SERVE =>
+				receivingPlayerMode <= RIGHT;
+				serveMode <= ACTIVE;
+
+				if (leftPaddle=ACTIVE) then
+					nextState <= RIGHT_MOVING;
+				end if;
+
+			when RIGHT_MOVING =>
+				if (currentState/=prevState) then
+					speedIncEn <= ACTIVE;
+				end if;
+				receivingPlayerMode <= RIGHT;
+
+				if (ballPosNum=0) then
+					nextState <= RIGHT_HITZONE;
+				end if;
+				if ((ballPosNum/=0) and (rightPaddle=ACTIVE)) then
+					nextState <= LEFT_ROUND_OVER;
+				end if;
+
+			when LEFT_MOVING =>
+				if (currentState/=prevState) then
+					speedIncEn <= ACTIVE;
+				end if;
+
+				if (ballPosNum=15) then
+					nextState <= LEFT_HITZONE;
+				end if;
+				if ((ballPosNum/=15) and (leftPaddle=ACTIVE)) then
+					nextState <= RIGHT_ROUND_OVER;
+				end if;
+
+			when RIGHT_HITZONE =>
+				receivingPlayerMode <= RIGHT;
+
+				if ((ballPosNum=0) and (rightPaddle=ACTIVE)) then
+					nextState <= LEFT_MOVING;
+				end if;
+				if (ballPosNum=-1) then
+					nextState <= LEFT_ROUND_OVER;
+				end if;
+
+			when LEFT_HITZONE =>
+				if ((ballPosNum=15) and (leftPaddle=ACTIVE)) then
+					nextState <= RIGHT_MOVING;
+				end if;
+				if (ballPosNum=16) then
+					nextState <= RIGHT_ROUND_OVER;
+				end if;
+
+			when RIGHT_ROUND_OVER =>
+				if (currentState/=prevState) then
+					speedRstEn <= ACTIVE;
+					rightWinEn <= ACTIVE;
+					startTimerEn <= ACTIVE;
+				end if;
+				patternMode <= ACTIVE;
+				winMode <= RIGHT;
+
+				if (timerDoneEn=ACTIVE) then
+					if ((rightScoreSignal>=7) and
+						(rightScoreSignal-leftScoreSignal>=2)) then
+						nextState <= RIGHT_GAME_OVER;
+					else
+						nextState <= LEFT_SERVE;
+					end if;
+				end if;
+
+			when LEFT_ROUND_OVER =>
+				if (currentState/=prevState) then
+					speedRstEn <= ACTIVE;
+					leftWinEn <= ACTIVE;
+					startTimerEn <= ACTIVE;
+				end if;
+				patternMode <= ACTIVE;
+
+				if (timerDoneEn=ACTIVE) then
+					if ((leftScoreSignal>=7) and
+						(leftScoreSignal-rightScoreSignal>=2)) then
+						nextState <= LEFT_GAME_OVER;
+					else
+						nextState <= RIGHT_SERVE;
+					end if;
+				end if;
+
+			when RIGHT_GAME_OVER =>
+				patternMode <= ACTIVE;
+				winMode <= RIGHT;
+
+			when LEFT_GAME_OVER =>
+				patternMode <= ACTIVE;
+		end case;
+
+	end process;
+
+end PongGame_ARCH;
