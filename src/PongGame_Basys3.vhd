@@ -6,6 +6,7 @@
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
+use ieee.numeric_std.all;
 use work.physical_io_package.ALL;
 
 entity PongGame_Basys3 is
@@ -35,7 +36,100 @@ architecture PongGame_Basys3_ARCH of PongGame_Basys3 is
 		);
 	end component;
 
+	-- constants
+	constant ACTIVE: std_logic := '1';
+	constant STABLE_CLOCKS: integer := 10;
+	
+	-- internal signals
+	signal leftCleanButton: std_logic;
+	signal rightCleanButton: std_logic;
+	signal leftPaddle_s: std_logic;
+	signal rightPaddle_s: std_logic;
+	signal leftScore_s: std_logic_vector(6 downto 0);
+	signal rightScore_s: std_logic_vector(6 downto 0);
+	signal digit3_s: std_logic_vector(3 downto 0);
+	signal digit2_s: std_logic_vector(3 downto 0);
+	signal digit1_s: std_logic_vector(3 downto 0);
+	signal digit0_s: std_logic_vector(3 downto 0);
+
 begin
 
+	LEFT_DEBOUNCE: ButtonDebouncer
+		generic map (STABLE_PERIOD => STABLE_CLOCKS)
+		port map (
+			reset => reset,
+			clock => clk,
+			asyncButton => btnL,
+			cleanButton => leftCleanButton
+		);
+
+	RIGHT_DEBOUNCE: ButtonDebouncer
+		generic map (STABLE_PERIOD => STABLE_CLOCKS)
+		port map (
+			reset => reset,
+			clock => clk,
+			asyncButton => btnR,
+			cleanButton => rightCleanButton
+		);
+
+	LEFT_PULSER: ButtonPulser
+		port map (
+			reset => reset,
+			clock => clk,
+			syncedButton => leftCleanButton,
+			buttonPulse => leftPaddle_s
+		);
+
+	RIGHT_PULSER: ButtonPulser
+		port map (
+			reset => reset,
+			clock => clk,
+			syncedButton => rightCleanButton,
+			buttonPulse => rightPaddle_s
+		);
+
+	UUT: PongGame
+		port map (
+			reset => reset,
+			clock => clk,
+			leftPaddle => leftPaddle_s,
+			rightPaddle => rightPaddle_s,
+
+			ledField => led,
+			leftScore => leftScore_s,
+			rightScore => rightScore_s
+		);
+
+	LEFT_BCD: process(leftScore_s)
+		variable temp: std_logic_vector(7 downto 0);
+	begin
+		temp := to_bcd_8bit(to_integer(unsigned(leftScore_s)));
+		digit3_s <= temp(7 downto 4);
+		digit2_s <= temp(3 downto 0);
+	end process;
+
+	RIGHT_BCD: process(rightScore_s)
+		variable temp: std_logic_vector(7 downto 0);
+	begin
+		temp := to_bcd_8bit(to_integer(unsigned(rightScore_s)));
+		digit1_s <= temp(7 downto 4);
+		digit0_s <= temp(3 downto 0);
+	end process;
+
+	SEGMENT_DRIVER: SevenSegmentDriver
+		port map (
+			reset => reset,
+			clock => clk,
+			digit3 => digit3_s,
+			digit2 => digit2_s,
+			digit1 => digit1_s,
+			digit0 => digit0_s,
+			blank3 => not ACTIVE,
+			blank2 => not ACTIVE,
+			blank1 => not ACTIVE,
+			blank0 => not ACTIVE,
+			sevenSegs => seg,
+			anodes => an
+		);
 
 end PongGame_Basys3_ARCH;
