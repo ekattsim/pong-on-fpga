@@ -56,7 +56,7 @@ architecture PongGame_ARCH of PongGame is
 	-- win pattern declarations
 	constant LEFT_WIN_PATTERN: std_logic_vector(15 downto 0) := "1111111100000000";
 	constant RIGHT_WIN_PATTERN: std_logic_vector(15 downto 0) := "0000000011111111";
-	constant PATTERN_PERIOD: integer := CLOCK_RATE-1;
+	constant PATTERN_PERIOD: integer := 5;
 
 	signal winMode: Player_t;
 	signal patternMode: std_logic;
@@ -66,8 +66,8 @@ architecture PongGame_ARCH of PongGame is
 
 	-- speed control declarations
 	type ArrayInt_t is array (0 to 8) of integer;
-	constant SPEED_COUNTS: ArrayInt_t := (0, CLOCK_RATE-1, (CLOCK_RATE/2)-1,
-										  (CLOCK_RATE/3)-1, (CLOCK_RATE/4)-1,
+	constant SPEED_COUNTS: ArrayInt_t := (0, 5, 4,
+										  3, (CLOCK_RATE/4)-1,
 										  (CLOCK_RATE/5)-1, (CLOCK_RATE/6)-1,
 										  (CLOCK_RATE/7)-1, (CLOCK_RATE/8)-1);
 	signal speedRstMode: std_logic;
