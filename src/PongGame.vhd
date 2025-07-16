@@ -1,6 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use work.physical_io_package.ALL;
 
 --------------------------------------------------------------
 -- 
@@ -85,30 +86,6 @@ architecture PongGame_ARCH of PongGame is
 	signal rightWinEn: std_logic;
 	signal leftScoreSignal: integer range 0 to 99;
 	signal rightScoreSignal: integer range 0 to 99;
-
-
-	----------------------------------------------------------
-	-- A basic counter that counts from 0 to 99. The count
-	-- signal is incremented every time countEnable pulses.
-	-- After 99, the counter stops counting.
-	----------------------------------------------------------
-	procedure count_to_99(signal reset: in std_logic;
-						  signal clock: in std_logic;
-						  signal countEnable: in std_logic;
-						  signal count: inout integer) is
-	begin
-		if (reset=ACTIVE) then
-			count <= 0;
-		elsif (rising_edge(clock)) then
-			if (countEnable=ACTIVE) then
-				if (count>=0 and count<99) then
-					count <= count + 1;
-				else
-					count <= 99;
-				end if;
-			end if;
-		end if;
-	end count_to_99;
 
 begin
 

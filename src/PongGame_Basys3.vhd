@@ -51,6 +51,8 @@ architecture PongGame_Basys3_ARCH of PongGame_Basys3 is
 	signal digit2_s: std_logic_vector(3 downto 0);
 	signal digit1_s: std_logic_vector(3 downto 0);
 	signal digit0_s: std_logic_vector(3 downto 0);
+	signal blank3_s: std_logic;
+	signal blank1_s: std_logic;
 
 begin
 
@@ -104,16 +106,30 @@ begin
 		variable temp: std_logic_vector(7 downto 0);
 	begin
 		temp := to_bcd_8bit(to_integer(unsigned(leftScore_s)));
+
 		digit3_s <= temp(7 downto 4);
 		digit2_s <= temp(3 downto 0);
+
+		if (temp(7 downto 4)="0000") then
+			blank3_s <= ACTIVE;
+		else
+			blank3_s <= not ACTIVE;
+		end if;
 	end process;
 
 	RIGHT_BCD: process(rightScore_s)
 		variable temp: std_logic_vector(7 downto 0);
 	begin
 		temp := to_bcd_8bit(to_integer(unsigned(rightScore_s)));
+
 		digit1_s <= temp(7 downto 4);
 		digit0_s <= temp(3 downto 0);
+
+		if (temp(7 downto 4)="0000") then
+			blank1_s <= ACTIVE;
+		else
+			blank1_s <= not ACTIVE;
+		end if;
 	end process;
 
 	SEGMENT_DRIVER: SevenSegmentDriver
@@ -124,9 +140,9 @@ begin
 			digit2 => digit2_s,
 			digit1 => digit1_s,
 			digit0 => digit0_s,
-			blank3 => not ACTIVE,
+			blank3 => blank3_s,
 			blank2 => not ACTIVE,
-			blank1 => not ACTIVE,
+			blank1 => blank1_s,
 			blank0 => not ACTIVE,
 			sevenSegs => seg,
 			anodes => an
