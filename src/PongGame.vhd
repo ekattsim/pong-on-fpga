@@ -66,11 +66,11 @@ architecture PongGame_ARCH of PongGame is
 	signal timerDoneEn: std_logic;
 
 	-- speed control declarations
-	type ArrayInt_t is array (0 to 8) of integer;
-	constant SPEED_COUNTS: ArrayInt_t := (0, CLOCK_RATE-1, (CLOCK_RATE/2)-1,
-										  (CLOCK_RATE/3)-1, (CLOCK_RATE/4)-1,
-										  (CLOCK_RATE/5)-1, (CLOCK_RATE/6)-1,
-										  (CLOCK_RATE/7)-1, (CLOCK_RATE/8)-1);
+	type ArrayInt_t is array (0 to 7) of integer;
+	constant SPEED_COUNTS: ArrayInt_t := (0, (CLOCK_RATE/2)-1, (CLOCK_RATE/3)-1,
+										  (CLOCK_RATE/4)-1, (CLOCK_RATE/5)-1,
+										  (CLOCK_RATE/6)-1, (CLOCK_RATE/7)-1,
+										  (CLOCK_RATE/8)-1);
 	signal speedRstMode: std_logic;
 	signal speedIncEn: std_logic;
 	signal rateEn: std_logic;
@@ -279,7 +279,7 @@ begin
 	-- The available speeds are described by SPEED_COUNTS.
 	----------------------------------------------------------
 	SPEED_CONTROL: process(reset, clock)
-		variable speedLevel: integer range 0 to 8;
+		variable speedLevel: integer range 0 to 7;
 		variable counter: integer range 0 to SPEED_COUNTS(1); -- Level 1 requires the longest count
 	begin
 		if (reset=ACTIVE) then
@@ -294,7 +294,7 @@ begin
 				counter := 0;
 			elsif (speedIncEn=ACTIVE) then
 				rateEn <= ACTIVE; -- immediately move ball on successful hit
-				if (speedLevel<8) then
+				if (speedLevel<7) then
 					speedLevel := speedLevel+1;
 					counter := 0;
 				end if;
