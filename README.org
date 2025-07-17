@@ -1,5 +1,30 @@
 #+title: Pong on FPGA
 
-* About
+* Project Description
 
-This repository contains the design files, sources, and constraints required to implement pong on [[https://digilent.com/shop/basys-3-amd-artix-7-fpga-trainer-board-recommended-for-introductory-users/][Basys 3 Dev Board]].
+This is an FPGA implementation of an advanced Pong game using the [[https://digilent.com/reference/programmable-logic/basys-3/reference-manual][Basys3 board]]. The game uses the 16 onboard LEDs as the playing field and the board buttons as paddles.
+
+** Features
+
+- 16-LED playing field (1 LED = the ball)
+- Left and right buttons as player paddles
+- Seven-segment displays show each player’s score (up to 99)
+- Victory pattern on win
+- Increasing ball speed on every successful return
+- Fully implemented with a state machine design
+
+** TODO Compatibility
+
+* Design Diagrams
+
+** State Machine
+
+** Design Block
+
+** Testbench Block
+
+** Toplevel(wrapper) Block
+
+* Getting Started
+
+* Authors
