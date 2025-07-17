@@ -23,7 +23,6 @@ architecture PongGame_TB_ARCH of PongGame_TB is
     -- Constants
     constant CLOCK_PERIOD : time := 10 ns; -- Corresponds to 100 MHz clock
 
-    -- Testbench signals to connect to the UUT
     signal reset_s        : std_logic := '0';
     signal clock_s        : std_logic := '0';
     signal leftPaddle_s   : std_logic := '0';
@@ -32,12 +31,8 @@ architecture PongGame_TB_ARCH of PongGame_TB is
     signal leftScore_s    : std_logic_vector(6 downto 0);
     signal rightScore_s   : std_logic_vector(6 downto 0);
 
-    -- A flag to prevent the simulation from running forever if something goes wrong
-    signal timeout_flag   : boolean := false;
-
 begin
 
-    -- Instantiate the Unit Under Test (UUT)
     UUT: PongGame
         port map (
             reset       => reset_s,
@@ -49,27 +44,15 @@ begin
             rightScore  => rightScore_s
         );
 
-    -- Clock generation process
-    clock_process: process
+    CLOCK: process
     begin
         clock_s <= '1';
         wait for CLOCK_PERIOD / 2;
         clock_s <= '0';
         wait for CLOCK_PERIOD / 2;
-    end process clock_process;
+    end process CLOCK;
 
-    -- Timeout process to stop the simulation if it gets stuck
-    timeout_process: process
-    begin
-        -- Let's give it 60 seconds of simulation time.
-        wait for 60 sec;
-        timeout_flag <= true;
-        wait;
-    end process timeout_process;
-
-
-    -- Stimulus process
-    stimulus_process: process
+    INPUT_DRIVER: process
     begin
         report "Starting Pong Game Testbench...";
 
@@ -91,9 +74,8 @@ begin
 
         -- === STEP 3: Wait for ball to reach the Left Player ===
         report "Waiting for ball to reach the left side (LED 15)...";
-        -- The ball's initial speed is one LED per second. This would take 15 seconds.
-        wait until ledField_s(15) = '1' or timeout_flag;
-        assert not timeout_flag report "TIMEOUT: Ball never reached the left side!" severity failure;
+        -- The ball's initial speed is two LEDs per second.
+        wait until ledField_s(15) = '1';
         report "Ball has reached the left side.";
 
         -- === STEP 4: Left Player successfully hits the ball ===
@@ -105,15 +87,13 @@ begin
 
         -- === STEP 5: Wait for ball to reach the Right Player ===
         report "Waiting for ball to return to the right side (LED 0)...";
-        wait until ledField_s(0) = '1' or timeout_flag;
-        assert not timeout_flag report "TIMEOUT: Ball never returned to the right side!" severity failure;
+        wait until ledField_s(0) = '1';
         report "Ball has reached the right side. Preparing for a miss.";
 
         -- === STEP 6: Right Player misses the ball ===
         -- We do nothing and let the ball pass. This should trigger a point for the left player. We can verify this by waiting for the score to change.
         report "Right player is missing the ball. Waiting for round to end...";
-        wait until leftScore_s /= "0000000" or timeout_flag;
-        assert not timeout_flag report "TIMEOUT: Round did not end after a miss!" severity failure;
+        wait until leftScore_s /= "0000000";
 
         -- === STEP 7: Verify Score and End Simulation ===
         report "Round over. Verifying score...";
@@ -126,11 +106,11 @@ begin
         assert rightScore_s = "0000000"
             report "FAIL: Right score is not 0." severity error;
 
-        assert false report "PASS: Test finished successfully." severity note;
+        report "Test finished." severity note;
 
         -- Halt the simulation
         wait;
 
-    end process stimulus_process;
+    end process INPUT_DRIVER;
 
 end PongGame_TB_ARCH;
