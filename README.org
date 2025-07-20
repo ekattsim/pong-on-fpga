@@ -1,19 +1,22 @@
 #+title: Pong on FPGA
 
-* Project Description
+* Overview
 
-This is an FPGA implementation of an advanced Pong game using the [[https://digilent.com/reference/programmable-logic/basys-3/reference-manual][Basys3 board]]. The game uses the 16 onboard LEDs as the playing field and the board buttons as paddles.
+This is a VHDL implementation of 1D Pong for the [[https://digilent.com/reference/programmable-logic/basys-3/reference-manual][Basys3 board]]. The playing field is mapped to a single-dimensional array of 16 LEDs and the left/right buttons act as paddles. The lit up LED represents the ball moving across the field.
 
-** Features
+* How It Works
 
-- 16-LED playing field (1 LED = the ball)
-- Left and right buttons as player paddles
-- Seven-segment displays show each player’s score (up to 99)
-- Victory pattern on win
-- Increasing ball speed on every successful return
-- Fully implemented with a state machine design
+- *Gameplay:* Players hit the paddle button when the ball (LED) reaches their end. Early/late hits end the round and score a point for the opponent.
 
-** TODO Compatibility
+- *Speed:* On each successful return, the ball speed is incremented. By default, the initial speed is 2 LEDs/sec and is incremented at a rate of 1 LED/sec per level. And there are a total of 7 levels. The initial speed and increment is parameterized by the INITIAL_SPEED and SPEED_INCREMENT generics.
+
+- *Serving:* Serve alternates every round, regardless of who won the previous point.
+
+- *Scoring:* By default, first to 7 points with a 2-point lead wins. Scores (up to 99) are shown on the seven-segment displays. Parameterized by the MIN_WIN_SCORE and WIN_BY_SCORE generics.
+
+- *Victory:* LEDs show a victory pattern at the end of each round. The pattern shown depends on who won that round and lasts for 1 sec by default. This can be configured by setting the LEFT_WIN_PATTERN, RIGHT_WIN_PATTERN, and PATTERN_PERIOD generics.
+
+- *Reset:* The down button resets the game.
 
 * Design Diagrams
 
@@ -25,6 +28,7 @@ This is an FPGA implementation of an advanced Pong game using the [[https://digi
 
 ** Toplevel(wrapper) Block
 
-* Getting Started
+* Authors/Course Info
 
-* Authors
+- Abhijeet Surakanti, Salini Ambadapudi, Gurbir Singh.
+- Final project for CPE 3020: VHDL Design with FPGAs (Summer 2025).
