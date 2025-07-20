@@ -31,6 +31,8 @@ entity PongGame is
 		RIGHT_WIN_PATTERN: std_logic_vector(15 downto 0);
 		PATTERN_PERIOD: integer; -- specify in seconds
 		INITIAL_SPEED: integer; -- specify in LEDs/sec
+		SPEED_INCREMENT: integer;
+		TOTAL_LEVELS: integer;
 		MIN_WIN_SCORE: integer;
 		WIN_BY_SCORE: integer
 	);
@@ -72,14 +74,18 @@ architecture PongGame_ARCH of PongGame is
 	signal timerDoneEn: std_logic;
 
 	-- speed control declarations
-	type ArrayInt_t is array (0 to 7) of integer;
-	constant SPEED_COUNTS: ArrayInt_t := (0, (CLOCK_RATE/INITIAL_SPEED)-1,
-										  (CLOCK_RATE/(INITIAL_SPEED+1))-1,
-										  (CLOCK_RATE/(INITIAL_SPEED+2))-1,
-										  (CLOCK_RATE/(INITIAL_SPEED+3))-1,
-										  (CLOCK_RATE/(INITIAL_SPEED+4))-1,
-										  (CLOCK_RATE/(INITIAL_SPEED+5))-1,
-										  (CLOCK_RATE/(INITIAL_SPEED+6))-1);
+	type ArrayInt_t is array (0 to TOTAL_LEVELS) of integer;
+	function gen_speed_counts return ArrayInt_t is
+		variable result : ArrayInt_t;
+	begin
+		result(0) := 0;
+		for i in 1 to TOTAL_LEVELS loop
+		result(i) := (CLOCK_RATE / (INITIAL_SPEED + (i - 1) * SPEED_INCREMENT)) - 1;
+		end loop;
+		return result;
+	end function;
+	constant SPEED_COUNTS : ArrayInt_t := gen_speed_counts;
+
 	signal speedRstMode: std_logic;
 	signal speedIncEn: std_logic;
 	signal rateEn: std_logic;
@@ -288,7 +294,7 @@ begin
 	-- The available speeds are described by SPEED_COUNTS.
 	----------------------------------------------------------
 	SPEED_CONTROL: process(reset, clock)
-		variable speedLevel: integer range 0 to 7;
+		variable speedLevel: integer range 0 to TOTAL_LEVELS;
 		variable counter: integer range 0 to SPEED_COUNTS(1); -- Level 1 requires the longest count
 	begin
 		if (reset=ACTIVE) then
@@ -303,7 +309,7 @@ begin
 				counter := 0;
 			elsif (speedIncEn=ACTIVE) then
 				rateEn <= ACTIVE; -- immediately move ball on successful hit
-				if (speedLevel<7) then
+				if (speedLevel<TOTAL_LEVELS) then
 					speedLevel := speedLevel+1;
 					counter := 0;
 				end if;

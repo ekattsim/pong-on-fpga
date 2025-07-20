@@ -30,6 +30,8 @@ architecture PongGame_Basys3_ARCH of PongGame_Basys3 is
 			RIGHT_WIN_PATTERN: std_logic_vector(15 downto 0);
 			PATTERN_PERIOD: integer; -- specify in seconds
 			INITIAL_SPEED: integer; -- specify in LEDs/sec
+			SPEED_INCREMENT: integer;
+			TOTAL_LEVELS: integer;
 			MIN_WIN_SCORE: integer;
 			WIN_BY_SCORE: integer
 		);
@@ -53,6 +55,8 @@ architecture PongGame_Basys3_ARCH of PongGame_Basys3 is
 	constant RIGHT_WIN_PATTERN: std_logic_vector(15 downto 0) := "0000000011111111";
 	constant PATTERN_PERIOD: integer := 1;
 	constant INITIAL_SPEED: integer := 2;
+	constant SPEED_INCREMENT: integer := 1;
+	constant TOTAL_LEVELS: integer := 7;
 	constant MIN_WIN_SCORE: integer := 7;
 	constant WIN_BY_SCORE: integer := 2;
 	
@@ -113,6 +117,8 @@ begin
 			RIGHT_WIN_PATTERN => RIGHT_WIN_PATTERN,
 			PATTERN_PERIOD => PATTERN_PERIOD,
 			INITIAL_SPEED => INITIAL_SPEED,
+			SPEED_INCREMENT => SPEED_INCREMENT,
+			TOTAL_LEVELS => TOTAL_LEVELS,
 			MIN_WIN_SCORE => MIN_WIN_SCORE,
 			WIN_BY_SCORE => WIN_BY_SCORE
 		)
