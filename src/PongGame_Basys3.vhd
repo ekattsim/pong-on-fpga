@@ -24,6 +24,15 @@ end PongGame_Basys3;
 architecture PongGame_Basys3_ARCH of PongGame_Basys3 is
     
     component PongGame is
+		generic (
+			CLOCK_RATE: integer;
+			LEFT_WIN_PATTERN: std_logic_vector(15 downto 0);
+			RIGHT_WIN_PATTERN: std_logic_vector(15 downto 0);
+			PATTERN_PERIOD: integer; -- specify in seconds
+			INITIAL_SPEED: integer; -- specify in LEDs/sec
+			MIN_WIN_SCORE: integer;
+			WIN_BY_SCORE: integer
+		);
         port (
 			reset: in std_logic;
 			clock: in std_logic;
@@ -38,7 +47,14 @@ architecture PongGame_Basys3_ARCH of PongGame_Basys3 is
 
 	-- constants
 	constant ACTIVE: std_logic := '1';
+	constant CLOCK_RATE: integer := 100000000;
 	constant STABLE_CLOCKS: integer := 10;
+	constant LEFT_WIN_PATTERN: std_logic_vector(15 downto 0) := "1111111100000000";
+	constant RIGHT_WIN_PATTERN: std_logic_vector(15 downto 0) := "0000000011111111";
+	constant PATTERN_PERIOD: integer := 1;
+	constant INITIAL_SPEED: integer := 2;
+	constant MIN_WIN_SCORE: integer := 7;
+	constant WIN_BY_SCORE: integer := 2;
 	
 	-- internal signals
 	signal leftCleanButton: std_logic;
@@ -91,6 +107,15 @@ begin
 		);
 
 	UUT: PongGame
+		generic map (
+			CLOCK_RATE => CLOCK_RATE,
+			LEFT_WIN_PATTERN => LEFT_WIN_PATTERN,
+			RIGHT_WIN_PATTERN => RIGHT_WIN_PATTERN,
+			PATTERN_PERIOD => PATTERN_PERIOD,
+			INITIAL_SPEED => INITIAL_SPEED,
+			MIN_WIN_SCORE => MIN_WIN_SCORE,
+			WIN_BY_SCORE => WIN_BY_SCORE
+		)
 		port map (
 			reset => reset,
 			clock => clk,

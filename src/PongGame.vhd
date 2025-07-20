@@ -25,6 +25,15 @@ use work.physical_io_package.ALL;
 --------------------------------------------------------------
 
 entity PongGame is
+	generic (
+		CLOCK_RATE: integer;
+		LEFT_WIN_PATTERN: std_logic_vector(15 downto 0);
+		RIGHT_WIN_PATTERN: std_logic_vector(15 downto 0);
+		PATTERN_PERIOD: integer; -- specify in seconds
+		INITIAL_SPEED: integer; -- specify in LEDs/sec
+		MIN_WIN_SCORE: integer;
+		WIN_BY_SCORE: integer
+	);
 	port (
 		reset: in std_logic;
 		clock: in std_logic;
@@ -41,7 +50,6 @@ architecture PongGame_ARCH of PongGame is
 
 	-- general constants
 	constant ACTIVE: std_logic := '1';
-	constant CLOCK_RATE: integer := 100000000;
 	type Player_t is (RIGHT, LEFT);
 	
 	-- state machine declarations
@@ -55,9 +63,7 @@ architecture PongGame_ARCH of PongGame is
 	signal nextState: States_t;
 
 	-- win pattern declarations
-	constant LEFT_WIN_PATTERN: std_logic_vector(15 downto 0) := "1111111100000000";
-	constant RIGHT_WIN_PATTERN: std_logic_vector(15 downto 0) := "0000000011111111";
-	constant PATTERN_PERIOD: integer := CLOCK_RATE-1;
+	constant PATTERN_PERIOD_COUNT: integer := (CLOCK_RATE*PATTERN_PERIOD)-1;
 
 	signal winMode: Player_t;
 	signal patternMode: std_logic;
@@ -67,10 +73,13 @@ architecture PongGame_ARCH of PongGame is
 
 	-- speed control declarations
 	type ArrayInt_t is array (0 to 7) of integer;
-	constant SPEED_COUNTS: ArrayInt_t := (0, (CLOCK_RATE/2)-1, (CLOCK_RATE/3)-1,
-										  (CLOCK_RATE/4)-1, (CLOCK_RATE/5)-1,
-										  (CLOCK_RATE/6)-1, (CLOCK_RATE/7)-1,
-										  (CLOCK_RATE/8)-1);
+	constant SPEED_COUNTS: ArrayInt_t := (0, (CLOCK_RATE/INITIAL_SPEED)-1,
+										  (CLOCK_RATE/(INITIAL_SPEED+1))-1,
+										  (CLOCK_RATE/(INITIAL_SPEED+2))-1,
+										  (CLOCK_RATE/(INITIAL_SPEED+3))-1,
+										  (CLOCK_RATE/(INITIAL_SPEED+4))-1,
+										  (CLOCK_RATE/(INITIAL_SPEED+5))-1,
+										  (CLOCK_RATE/(INITIAL_SPEED+6))-1);
 	signal speedRstMode: std_logic;
 	signal speedIncEn: std_logic;
 	signal rateEn: std_logic;
@@ -198,8 +207,8 @@ begin
 				winMode <= RIGHT;
 
 				if (timerDoneEn=ACTIVE) then
-					if ((rightScoreSignal>=7) and
-						(rightScoreSignal-leftScoreSignal>=2)) then
+					if ((rightScoreSignal>=MIN_WIN_SCORE) and
+						(rightScoreSignal-leftScoreSignal>=WIN_BY_SCORE)) then
 						nextState <= RIGHT_GAME_OVER;
 					else
 						nextState <= LEFT_SERVE;
@@ -214,8 +223,8 @@ begin
 				patternMode <= ACTIVE;
 
 				if (timerDoneEn=ACTIVE) then
-					if ((leftScoreSignal>=7) and
-						(leftScoreSignal-rightScoreSignal>=2)) then
+					if ((leftScoreSignal>=MIN_WIN_SCORE) and
+						(leftScoreSignal-rightScoreSignal>=WIN_BY_SCORE)) then
 						nextState <= LEFT_GAME_OVER;
 					else
 						nextState <= RIGHT_SERVE;
@@ -240,13 +249,13 @@ begin
 	rightScore <= std_logic_vector(to_unsigned(rightScoreSignal, 7));
 
 	----------------------------------------------------------
-	-- Timer process that starts counting on the startTimerEn
-	-- pulse upto PATTERN_PERIOD and pulses timerDoneEn after
+	-- Timer process that starts counting on startTimerEn
+	-- until PATTERN_PERIOD_COUNT and pulses timerDoneEn after
 	-- finishing.
 	----------------------------------------------------------
 	PATTERN_TIMER: process(reset, clock)
 		variable countMode: std_logic;
-		variable counter: integer range 0 to PATTERN_PERIOD;
+		variable counter: integer range 0 to PATTERN_PERIOD_COUNT;
 	begin
 		if (reset=ACTIVE) then
 			timerDoneEn <= not ACTIVE;
@@ -258,7 +267,7 @@ begin
 				countMode := ACTIVE;
 				counter := 0;
 			elsif (countMode=ACTIVE) then
-				if (counter=PATTERN_PERIOD) then
+				if (counter=PATTERN_PERIOD_COUNT) then
 					timerDoneEn <= ACTIVE;
 					counter := 0;
 					countMode := not ACTIVE;
