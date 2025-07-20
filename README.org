@@ -21,12 +21,31 @@ This is a VHDL implementation of 1D Pong for the [[https://digilent.com/referenc
 * Design Diagrams
 
 ** State Machine
+:PROPERTIES:
+:ID:       c091bd07-4634-4264-88fb-e1a6eb67cb50
+:END:
+
+Made with obsidian canvas.
+
+[[file:resources/pong_state_diagram.png]]
 
 ** Design Block
+:PROPERTIES:
+:ID:       722f864c-6637-4a3c-956e-cc0b3c0c9b0a
+:END:
 
-** Testbench Block
+Made with excalidraw.
+
+[[file:resources/design-block.png]]
 
 ** Toplevel(wrapper) Block
+:PROPERTIES:
+:ID:       21940682-ba0e-4df6-968f-70433a5fc9ec
+:END:
+
+Made with excalidraw.
+
+[[file:resources/wrapper-block-diagram.png]]
 
 * Authors/Course Info
 
