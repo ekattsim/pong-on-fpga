@@ -1,5 +1,53 @@
 #+title: Pong on FPGA
 
-* About
+* Overview
 
-This repository contains the design files, sources, and constraints required to implement pong on [[https://digilent.com/shop/basys-3-amd-artix-7-fpga-trainer-board-recommended-for-introductory-users/][Basys 3 Dev Board]].
+This is a VHDL implementation of 1D Pong for the [[https://digilent.com/reference/programmable-logic/basys-3/reference-manual][Basys3 board]]. The playing field is mapped to a single-dimensional array of 16 LEDs and the left/right buttons act as paddles. The lit up LED represents the ball moving across the field.
+
+* How It Works
+
+- *Gameplay:* Players hit the paddle button when the ball (LED) reaches their end. Early/late hits end the round and score a point for the opponent.
+
+- *Speed:* On each successful return, the ball speed is incremented. By default, the initial speed is 2 LEDs/sec and is incremented at a rate of 1 LED/sec per level. And there are a total of 7 levels. The initial speed and increment is parameterized by the INITIAL_SPEED and SPEED_INCREMENT generics.
+
+- *Serving:* Serve alternates every round, regardless of who won the previous point.
+
+- *Scoring:* By default, first to 7 points with a 2-point lead wins. Scores (up to 99) are shown on the seven-segment displays. Parameterized by the MIN_WIN_SCORE and WIN_BY_SCORE generics.
+
+- *Victory:* LEDs show a victory pattern at the end of each round. The pattern shown depends on who won that round and lasts for 1 sec by default. This can be configured by setting the LEFT_WIN_PATTERN, RIGHT_WIN_PATTERN, and PATTERN_PERIOD generics.
+
+- *Reset:* The down button resets the game.
+
+* Design Diagrams
+
+** State Machine
+:PROPERTIES:
+:ID:       c091bd07-4634-4264-88fb-e1a6eb67cb50
+:END:
+
+Made with obsidian canvas.
+
+[[file:resources/pong_state_diagram.png]]
+
+** Design Block
+:PROPERTIES:
+:ID:       722f864c-6637-4a3c-956e-cc0b3c0c9b0a
+:END:
+
+Made with excalidraw.
+
+[[file:resources/design-block.png]]
+
+** Toplevel(wrapper) Block
+:PROPERTIES:
+:ID:       21940682-ba0e-4df6-968f-70433a5fc9ec
+:END:
+
+Made with excalidraw.
+
+[[file:resources/wrapper-block-diagram.png]]
+
+* Authors/Course Info
+
+- Abhijeet Surakanti, Salini Ambadapudi, Gurbir Singh.
+- Final project for CPE 3020: VHDL Design with FPGAs (Summer 2025).
